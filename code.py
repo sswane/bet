@@ -1,4 +1,6 @@
-buy_in = int(input("Cost of buy in? "))
+from termcolor import colored, cprint
+
+buy_in = round(float(input("Cost of buy in? ")), 2)
 players = input("Names of players separated by space: ")
 players_list = players.split()
 
@@ -8,47 +10,55 @@ bets = dict()
 for player in players_list:
     bets[player] = buy_in
 
-print(f"Players & bets: {bets}")
-print(f"Pot size: ${pot}")
+cprint(f"Players & bets: {bets}", 'cyan')
+cprint(f"Pot size: ${pot}", 'cyan')
 
 winners = dict()
 losers = dict()
+evens = []
+total_passed_in = 0
 def end(name, amount_left):
+    global total_passed_in 
+    total_passed_in += amount_left
     total = amount_left - buy_in
     bets.update({name: total})
     if total > 0:
         winners[name] = total
-        print(f"{name} won ${total}")
+        cprint(f"{name} won ${total}", 'green')
     elif total < 0:
         losers[name] = total
         total = abs(total)
-        print(f"{name} lost ${total}")
+        cprint(f"{name} lost ${total}", 'red')
     else:
-        print(f"{name} broke even")
+        evens.append(name)
+        cprint(f"{name} broke even", 'yellow')
 
 for player in bets:
-    amount_left = int(input("How much does " + player + " have left? "))
+    amount_left = round(float(input("How much does " + player + " have left? ")), 2)
     end(player, amount_left)
 
+if total_passed_in != pot:
+    print("*** Please verify that your total buy in matches your total player input. ***")
+    raise Exception("Those numbers don't add up...")
 print(f"Totals after betting: {bets}")
 
-while losers:
-    highest_winner = max(winners, key=bets.get)
-    biggest_loser = min(losers, key=bets.get)
+# If a loser owes the same amount a winner won, then the loser should directly pay that winner.
+for loser in list(losers.keys()):
+    lost_amount = abs(losers.get(loser))
+    for winner in list(winners.keys()):
+        if winners.get(winner) == lost_amount:
+            cprint(f"{loser} owes {winner} {winners.get(winner)}", 'red')
+            del losers[loser]
+            del winners[winner]
 
-    diff = winners.get(highest_winner) + losers.get(biggest_loser)
-    if diff >= 0:
-        print(f"{biggest_loser} owes all their money")
-        del losers[biggest_loser]
-        winners.update({highest_winner: winners.get(highest_winner) - diff})
-        if diff == 0:
-            print(f"{biggest_loser} owes {highest_winner} ${winners.get(highest_winner)}")
-        else:
-            print(f"{biggest_loser} owes {highest_winner} ${diff}")
-    else:
-        amount = abs(diff)
-        print(f"{biggest_loser} owes {highest_winner} ${winners.get(highest_winner)}")
-        print(f"{highest_winner} has been paid off and {biggest_loser} has ${amount} left to pay out to other winners")
-        del winners[highest_winner]
-        losers.update({biggest_loser: diff})
-print(f"{highest_winner} has been paid off. All winners have been paid off.")
+# All other losers should pay banker
+if losers:
+    for loser in losers:
+        cprint(f"{loser} owes the bank ${lost_amount}", 'red')
+# Banker should pay winners
+if winners:
+    for winner in winners:
+        cprint(f"Banker owes {winner} ${winners.get(winner)}", 'red')
+
+if evens:
+    cprint(f"Remember that {evens} broke even, so they keep their money", 'yellow')
