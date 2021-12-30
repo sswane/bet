@@ -1,4 +1,4 @@
-from termcolor import colored, cprint
+from termcolor import cprint
 
 buy_in = round(float(input("Cost of buy in? ")), 2)
 players = input("Names of players separated by space: ")
@@ -38,7 +38,7 @@ for player in bets:
     end(player, amount_left)
 
 if total_passed_in != pot:
-    print("*** Please verify that your total buy in matches your total player input. ***")
+    cprint("*** Please verify that your total buy in matches your total player input. ***", 'red')
     raise Exception("Those numbers don't add up...")
 print(f"Totals after betting: {bets}")
 
